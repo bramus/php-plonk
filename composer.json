@@ -1,0 +1,16 @@
+{
+    "name": "plonk/plonk",
+    "type": "library",
+    "license": "MIT",
+	"autoload": {
+		"psr-0": {
+			"Plonk": "src/"
+		}
+	},
+    "authors": [
+        {
+            "name": "Bramus",
+            "email": "bramus@bram.us"
+        }
+    ]
+}
