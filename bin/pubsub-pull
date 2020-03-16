@@ -1,0 +1,60 @@
+#!/usr/bin/env php
+<?php
+
+// PHP Config
+ini_set('display_errors', 'on');
+ini_set('error_reporting', E_ALL);
+date_default_timezone_set('UTC');
+@set_time_limit(20 * 60); // 20 min time limit ought to be enough for everyone
+
+// Some constants
+define('BELL', "\x07");
+
+// Arguments check. Make sure we have 1 (filename) + 5
+if (!isset($argc)) exit(BELL . 'This file must be called in CLI mode!' . PHP_EOL);
+if ($argc < 6) exit(BELL . 'Invalid call! Got ' . ($argc-1) . ' arguments! (' . implode(', ', array_slice($argv, 1)) . ') instead of (at least) 5.' . PHP_EOL . 'Run this file as `' . $argv[0] . ' path/to/config env topic subscription handlerClass`' . PHP_EOL);
+
+// Extract vars from arguments
+list($thisfile, $configfile, $env, $topic, $subscription, $handler) = $argv;
+$processorOptions = array_slice($argv, 5);
+
+// Autoloader
+$foundAutoloader = false;
+$autoloaderCandidates = [
+    '/../vendor/autoload.php',     // Git clone of package
+    '/../../../autoload.php',      // Composer install of package
+];
+foreach ($autoloaderCandidates as $candidate) {
+    if (file_exists(__DIR__ . $candidate)) {
+        require_once __DIR__ . $candidate;
+        $foundAutoloader = true;
+        break;
+    }
+}
+if (!$foundAutoloader) {
+    exit(BELL . 'Can not find autoloader. Make sure you ran `composer install`' . PHP_EOL);
+}
+
+// Require config
+if (!@file_exists($configfile)) {
+    exit(BELL . 'Can not load config file from location "' . $configfile . '"' . PHP_EOL);
+}
+$config = require $configfile;
+
+// Create the Processor and start it
+if (substr($handler, -4) === '.php') $handler = substr($handler, 0, -4);
+try {
+    $application = new \Plonk\Runtime\PubSub\Pull\Application($config, $env);
+	$application
+        ->with('topicName', $topic)
+        ->with('subscriptionName', $subscription)
+        ->with('handlerClassName', $handler)
+        ->boot();
+	$application->run();
+} catch (\Exception $e) {
+    if ($application) {
+        $application->handleException($e);
+    } else {
+        throw $e;
+    }
+}

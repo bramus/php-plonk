@@ -12,5 +12,6 @@
             "name": "Bramus",
             "email": "bramus@bram.us"
         }
-    ]
+    ],
+    "bin": ["bin/pubsub-pull"]
 }
