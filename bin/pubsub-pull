@@ -22,7 +22,8 @@ $processorOptions = array_slice($argv, 5);
 $foundAutoloader = false;
 $autoloaderCandidates = [
     '/../vendor/autoload.php',     // Git clone of package
-    '/../../../autoload.php',      // Composer install of package
+    '/../../../autoload.php',      // Composer install of package (symlinked)
+    '/../autoload.php',            // Composer install of package (copied)
 ];
 foreach ($autoloaderCandidates as $candidate) {
     if (file_exists(__DIR__ . $candidate)) {
