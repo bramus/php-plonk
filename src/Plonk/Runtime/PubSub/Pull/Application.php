@@ -60,7 +60,7 @@ class Application extends \Plonk\Runtime\PubSub\Application {
     public function run() {
         // @TODO: validate params being present
         $this->handler = new $this->handlerClassName($this, $this->topicName, $this->subscriptionName);
-        $this->handler->run();
+        return $this->handler->run();
     }
 
 }
