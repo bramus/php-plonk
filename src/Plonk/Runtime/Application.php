@@ -125,6 +125,8 @@ abstract class Application extends \Pimple {
 	public function boot() {
 		$this->loadDependencies($this->config, $this->env);
 		$this->bootProviders();
+
+		return $this;
 	}
 
 	public function with($name, $value) {
