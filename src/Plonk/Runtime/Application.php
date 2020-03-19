@@ -18,6 +18,8 @@ abstract class Application extends \Pimple {
 	protected $env;
 	protected $config;
 
+	private $booted = false;
+
 	public $loggerIdentifier = false;
 
 	/**
@@ -118,13 +120,20 @@ abstract class Application extends \Pimple {
 		}
 	}
 
+	public function isBooted() {
+		return $this->booted;
+	}
+
 	/**
 	 * You know boot, right before run …
 	 * @return [type] [description]
 	 */
 	public function boot() {
-		$this->loadDependencies($this->config, $this->env);
-		$this->bootProviders();
+        if (!$this->isBooted()) {
+            $this->loadDependencies($this->config, $this->env);
+            $this->bootProviders();
+			$this->booted = true;
+        }
 
 		return $this;
 	}
