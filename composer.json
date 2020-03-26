@@ -13,5 +13,8 @@
             "email": "bramus@bram.us"
         }
     ],
-    "bin": ["bin/pubsub-pull"]
+    "bin": [
+        "bin/pubsub-pull",
+        "bin/pubsub-push"
+    ]
 }

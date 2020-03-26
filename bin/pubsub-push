@@ -1,0 +1,147 @@
+#!/usr/bin/env php
+<?php
+
+// PHP Config
+ini_set('display_errors', 'on');
+ini_set('error_reporting', E_ALL);
+date_default_timezone_set('UTC');
+@set_time_limit(20 * 60); // 20 min time limit ought to be enough for everyone
+
+// Some constants
+define('BELL', "\x07");
+
+// Arguments check. Make sure we have 1 (filename) + 4
+if (!isset($argc)) exit(BELL . 'This file must be called in CLI mode!' . PHP_EOL);
+if ($argc < 5) exit(BELL . 'Invalid call! Got ' . ($argc-1) . ' arguments! (' . implode(', ', array_slice($argv, 1)) . ') instead of 4.' . PHP_EOL . 'Run this file as `' . $argv[0] . ' path/to/config env port handlerClass`' . PHP_EOL);
+
+// Extract vars from arguments
+list($thisfile, $configfile, $env, $port, $handlerClass) = $argv;
+
+// Autoloader
+$foundAutoloader = false;
+$autoloaderCandidates = [
+    '/../vendor/autoload.php',     // Git clone of package
+    '/../../../autoload.php',      // Composer install of package (symlinked)
+    '/../autoload.php',            // Composer install of package (copied)
+];
+foreach ($autoloaderCandidates as $candidate) {
+    if (file_exists(__DIR__ . $candidate)) {
+        require_once __DIR__ . $candidate;
+        $foundAutoloader = true;
+        break;
+    }
+}
+if (!$foundAutoloader) {
+    exit(BELL . 'Can not find autoloader. Make sure you ran `composer install`' . PHP_EOL);
+}
+
+// Require config
+if (!@file_exists($configfile)) {
+    exit(BELL . 'Can not load config file from location "' . $configfile . '"' . PHP_EOL);
+}
+$config = require $configfile;
+
+// Create Application
+$application = new \Plonk\Runtime\PubSub\Push\Application($config, $env);
+$application
+    ->with('handlerClassName', $handlerClass)
+    ->boot();
+
+// Create converters to convert between PSR
+// $httpFoundationFactory = new \Symfony\Bridge\PsrHttpMessage\Factory\HttpFoundationFactory();
+$psr7Factory = new \Nyholm\Psr7\Factory\Psr17Factory();
+$psrHttpFactory = new \Symfony\Bridge\PsrHttpMessage\Factory\PsrHttpFactory($psr7Factory, $psr7Factory, $psr7Factory, $psr7Factory);
+
+// Create Server
+$loop = React\EventLoop\Factory::create();
+$server = new React\Http\Server([
+    function (\Psr\Http\Message\ServerRequestInterface $request) use ($application, $psrHttpFactory) {
+        try {
+
+            // Only allow POST requests
+            if ($request->getMethod() !== 'POST') {
+                return new \React\Http\Response(
+                    405,
+                    ['Content-Type' => 'text/plain'],
+                    'Invalid Request Method'
+                );
+            }
+
+            // $symfonyRequest =  $httpFoundationFactory->createRequest($request);
+            // $body = $symfonyRequest->getContent();
+            $body = (string) $request->getBody();
+
+            // Make sure we have JSON
+            try {
+                $json = \Concis\Util\Json::decode($body);
+            } catch (\Exception $e) {
+                return new \React\Http\Response(
+                    400,
+                    ['Content-Type' => 'text/plain'],
+                    'Invalid JSON'
+                );
+            }
+
+            // Convert JSON from request into a PubSubEvent
+            try {
+                $event = \Concis\Util\ObjectFactory::fromString(
+                    $body,
+                    \Concis\Provider\GCPCloud\Pubsub\Datatype\PubsubEvent::class
+                );
+            } catch (\Exception $e) {
+                return new \React\Http\Response(
+                    400,
+                    ['Content-Type' => 'text/plain'],
+                    'Invalid PubSub Event'
+                );
+            }
+
+            // Process the PubSubEvent using our Application
+            try {
+                $app = clone $application;
+                $response = $app
+                    ->with('topicName', $event->getSubscription())
+                    ->with('message', $event->getMessage())
+                    ->run();
+            } catch (\Exception $e) {
+                return new \React\Http\Response(
+                    500,
+                    ['Content-Type' => 'text/plain'],
+                    'Could not process message: ' . $e->getMessage()
+                );
+            }
+
+            // Got a \Symfony\Component\HttpFoundation\Response as response?
+            // ~> Cast to \React\Http\Response and return that
+            if (is_a($response, \Symfony\Component\HttpFoundation\Response::class)) {
+                return $psrHttpFactory->createResponse($response);
+            }
+
+            // Got a \React\Http\Response? Return it
+            if (is_a($response, \React\Http\Response::class)) {
+                return $response;
+            }
+
+            // Other types?
+            return new \React\Http\Response(
+                200,
+                ['Content-Type' => 'text/plain'],
+                $response
+            );
+        } catch (\Exception $e) {
+            return new \React\Http\Response(
+                500,
+                ['Content-Type' => 'text/plain'],
+                'Internal Server Error: ' . $e->getMessage()
+            );
+        }
+    },
+]);
+
+// Listen on PORT
+$socket = new React\Socket\Server("0.0.0.0:$port", $loop);
+$server->listen($socket);
+
+echo "Server running at http://0.0.0.0:$port\n";
+
+$loop->run();
