@@ -14,7 +14,7 @@ abstract class Handler extends \Plonk\Runtime\PubSub\Handler
      *
      * @return void
      */
-    public function __construct(\Pimple $app, string $topicName, PubsubMessage $message)
+    public function __construct(\Pimple $app, string $topicName = null, PubsubMessage $message = null)
     {
         $this->app = $app;
         $this->topicName = $topicName;
