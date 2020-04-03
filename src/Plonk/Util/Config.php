@@ -8,7 +8,11 @@ class Config {
 		foreach ($config as $key => $value) {
 			if (in_array($key, $allowedEnvs)) {
 				if ($key === $activeEnv) {
-					$config += $value;
+                    if (\is_array($value)) {
+                        $config += $value;
+                    } else {
+						$config = $value;
+					}
 				}
 				unset($config[$key]);
 			} elseif (is_array($value)) {
