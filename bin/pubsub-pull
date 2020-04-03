@@ -18,6 +18,9 @@ if ($argc < 6) exit(BELL . 'Invalid call! Got ' . ($argc-1) . ' arguments! (' . 
 list($thisfile, $configfile, $env, $topic, $subscription, $handler) = $argv;
 $processorOptions = array_slice($argv, 5);
 
+// Store some vars in ENV
+putenv('APP_ENV='.$env);
+
 // Autoloader
 $foundAutoloader = false;
 $autoloaderCandidates = [

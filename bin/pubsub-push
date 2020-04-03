@@ -17,6 +17,10 @@ if ($argc < 5) exit(BELL . 'Invalid call! Got ' . ($argc-1) . ' arguments! (' . 
 // Extract vars from arguments
 list($thisfile, $configfile, $env, $port, $handlerClass) = $argv;
 
+// Store some vars in ENV
+putenv('APP_ENV='.$env);
+putenv('PORT='.$port);
+
 // Autoloader
 $foundAutoloader = false;
 $autoloaderCandidates = [
