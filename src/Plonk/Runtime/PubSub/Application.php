@@ -24,11 +24,11 @@ abstract class Application extends \Plonk\Runtime\Application {
 	 * @param  array $config The Configuration Array
 	 * @return void
 	 */
-	protected function loadDependencies($config, $env) {
-        parent::loadDependencies($config, $env);
+	protected function loadDependencies($config) {
+        parent::loadDependencies($config);
 
         // Load in HanderClass' dependencies
-        $this->handlerClassName::loadDependencies($this, $config, $env);
+        $this->handlerClassName::loadDependencies($this, $config);
     }
 
     /**

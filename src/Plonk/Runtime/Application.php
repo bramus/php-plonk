@@ -28,8 +28,16 @@ abstract class Application extends \Pimple {
 	 * @return void
 	 */
 	public function __construct($config, $env) {
-		$this->storeConfig($config);
+		$this->validateEnv($env, $config['conf.environments'] ?? []);
+
 		$this->storeEnv($env);
+		$this->storeConfig($config);
+	}
+
+	protected function validateEnv($env, array $envs = []) {
+		if (sizeof($envs) && !in_array($env, $envs)) {
+			throw new \Exception('INVALID APP_ENV "' . $env . '"');
+		}
 	}
 
 	/**
@@ -38,10 +46,16 @@ abstract class Application extends \Pimple {
 	 * @return [type]         [description]
 	 */
 	protected function storeConfig($config) {
+
+		// Envify Settings
+		if (isset($config['conf.environments']) && sizeof($config['conf.environments'])) {
+            $config = \Plonk\Util\Config::envify($config, $this->env, $config['conf.environments']);
+        }
+
+		// Store it
 		$this->config = $config;
 
-        // @TODO: envify?
-
+		// Inject
 		foreach ($config as $configKey => $configValue) {
 			$this[$configKey] = $configValue;
 		}
@@ -55,10 +69,6 @@ abstract class Application extends \Pimple {
 	protected function storeEnv($env) {
 		$this->env = $env;
 		$this['env'] = $env;
-
-		if (!in_array($env, $this->config['conf.environments'])) {
-			exit('INVALID APP_ENV "' . $env . '"' . PHP_EOL);
-		}
 	}
 
 	/**
@@ -66,17 +76,17 @@ abstract class Application extends \Pimple {
 	 * @param  array $config The Configuration Array
 	 * @return void
 	 */
-	protected function loadDependencies($config, $env) {
+	protected function loadDependencies($config) {
 
 		// Store debug flag
-		$this['debug'] = $config['conf.debug'][$env];
+		$this['debug'] = $config['conf.debug'];
 
 		// Monolog
         // @TODO: loggerIdentifier override
 		// if ($this->loggerIdentifier) {
-		// 	$config['conf.logger'][$env]['name'] = $this->loggerIdentifier;
+		// 	$config['conf.logger']['name'] = $this->loggerIdentifier;
 		// }
-		$this->register(new \Plonk\Provider\Service\LoggerServiceProvider($config['conf.logger'][$env] ?? null));
+		$this->register(new \Plonk\Provider\Service\LoggerServiceProvider($config['conf.logger'] ?? null));
 
 		// @TODO: Other default dependencies?
 		// - Database

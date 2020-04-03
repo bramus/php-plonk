@@ -28,13 +28,13 @@ class LoggerServiceProvider extends PimpleBasedServiceProvider {
 					break;
 
 				case 'gcs://stackdriver':
-					if (!isset($app['conf.stackdriver']) || !isset($app['conf.stackdriver'][$app['env']])) {
+					if (!isset($app['conf.stackdriver']) || !isset($app['conf.stackdriver'])) {
 						throw new \Exception("LoggerServiceProvider: `gcs://stackdriver` is defined as the logger, but no `conf.stackdriver` is present in the config", 1);
 					}
 					$handler = new \CodeInternetApplications\MonologStackdriver\StackdriverHandler(
-						$app['conf.stackdriver'][$app['env']]['projectId'],
+						$app['conf.stackdriver']['projectId'],
 						[
-							'keyFilePath' => $app['conf.stackdriver'][$app['env']]['keyFilePath'],
+							'keyFilePath' => $app['conf.stackdriver']['keyFilePath'],
 						],
 						[
 							'labels' => [

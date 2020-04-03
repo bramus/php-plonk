@@ -41,11 +41,11 @@ class Application extends \Plonk\Runtime\PubSub\Application {
 	 * @param  array $config The Configuration Array
 	 * @return void
 	 */
-	protected function loadDependencies($config, $env) {
-        parent::loadDependencies($config, $env);
+	protected function loadDependencies($config) {
+        parent::loadDependencies($config);
 
         // GCPPubSub
-        $pubsubConfig = $config['conf.pubsub'][$this['env']];
+        $pubsubConfig = $config['conf.pubsub'];
         $this['pubsub'] = $this->share(function () use ($pubsubConfig) {
             return new \Plonk\Service\GCPPubSub($pubsubConfig);
         });

@@ -11,7 +11,7 @@ abstract class Handler
 	 * @param  string $env The environment
 	 * @return void
 	 */
-	public static function loadDependencies($app, $config, $env)
+	public static function loadDependencies($app, $config)
     {
         // NOOP
     }
