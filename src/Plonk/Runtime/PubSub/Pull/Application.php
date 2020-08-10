@@ -58,9 +58,30 @@ class Application extends \Plonk\Runtime\PubSub\Application {
 	 * @return	void
 	 */
     public function run() {
+
+        // Start Server
+        $this['logger'] && $this['logger']->debug("Starting with processing of PubSub topic {$this->topicName} using Pull Subscription {$this->subscriptionName}\n");
+
+        // Configure PubSub connection 
+        $this['pubsub']
+            ->setTopic($this->topicName)
+            ->setSubscription($this->subscriptionName);
+
+        // Pull message from queue
+        $message = $this['pubsub']->pullMessage();
+
         // @TODO: validate params being present
-        $this->handler = new $this->handlerClassName($this, $this->topicName, $this->subscriptionName);
-        return $this->handler->run();
+
+        // Create Handler
+        $this->handler = new $this->handlerClassName($this);
+
+        // Run handler with proper settings
+        return $this->handler
+            ->with('topicName', $this->topicName)
+            ->with('subscriptionName', $this->subscriptionName)
+            ->with('message', $message)
+            ->run();
+
     }
 
 }
