@@ -24,13 +24,14 @@ putenv('PORT='.$port);
 // Autoloader
 $foundAutoloader = false;
 $autoloaderCandidates = [
-    '/../vendor/autoload.php',     // Git clone of package
-    '/../../../autoload.php',      // Composer install of package (symlinked)
-    '/../autoload.php',            // Composer install of package (copied)
+    __DIR__ . '/../vendor/autoload.php',     // Git clone of package
+    __DIR__ . '/../autoload.php',            // Composer install of package (copied)
+    __DIR__ . '/../../../autoload.php',      // Composer install of package (symlinked)
+    getcwd() . '/vendor/autoload.php',       // Composer install of package (symlinked, ran from symlinked project root)
 ];
 foreach ($autoloaderCandidates as $candidate) {
-    if (file_exists(__DIR__ . $candidate)) {
-        require_once __DIR__ . $candidate;
+    if (file_exists($candidate)) {
+        require_once $candidate;
         $foundAutoloader = true;
         break;
     }
