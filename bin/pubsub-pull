@@ -24,10 +24,11 @@ putenv('APP_ENV='.$env);
 // Autoloader
 $foundAutoloader = false;
 $autoloaderCandidates = [
-    __DIR__ . '/../vendor/autoload.php',     // Git clone of package
+    getcwd() . '/vendor/autoload.php',       // Composer install of package (symlinked into project, ran from ./ folder (project root))
+    getcwd() . '/../autoload.php',           // Composer install of package (symlinked into project, ran from ./vendor/bin folder)
+    __DIR__ . '/../vendor/autoload.php',     // Git clone of package (ran using ./bin/$self)
     __DIR__ . '/../autoload.php',            // Composer install of package (copied)
     __DIR__ . '/../../../autoload.php',      // Composer install of package (symlinked)
-    getcwd() . '/vendor/autoload.php',       // Composer install of package (symlinked, ran from )
 ];
 foreach ($autoloaderCandidates as $candidate) {
     if (file_exists($candidate)) {
