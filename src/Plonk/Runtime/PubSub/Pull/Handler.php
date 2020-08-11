@@ -23,6 +23,24 @@ abstract class Handler extends \Plonk\Runtime\PubSub\Handler
         $this->message = $message;
     }
 
+    /**
+     * Should this handler loop pull messages?
+     */
+    public function shouldLoopAndPull() {
+        return true;
+    }
+
+    /**
+     * The config to use when pulling from GCS PubSub
+     */
+    public function getPullConfig() {
+        return [
+            'maxMessages' => 1,
+            'returnImmediately' => false,
+            'autoAcknowledge' => false,
+        ];
+    }
+
     public function getTopicName() {
         return $this->topicName;
     }

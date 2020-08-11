@@ -62,25 +62,66 @@ class Application extends \Plonk\Runtime\PubSub\Application {
         // Start Server
         $this['logger'] && $this['logger']->debug("Starting with processing of PubSub topic {$this->topicName} using Pull Subscription {$this->subscriptionName}\n");
 
-        // Configure PubSub connection 
+        // Configure PubSub connection
         $this['pubsub']
             ->setTopic($this->topicName)
             ->setSubscription($this->subscriptionName);
 
-        // Pull message from queue
-        $message = $this['pubsub']->pullMessage();
-
-        // @TODO: validate params being present
-
         // Create Handler
         $this->handler = new $this->handlerClassName($this);
 
-        // Run handler with proper settings
-        return $this->handler
-            ->with('topicName', $this->topicName)
-            ->with('subscriptionName', $this->subscriptionName)
-            ->with('message', $message)
-            ->run();
+        // Create Event Loop
+        $eventLoop = \React\EventLoop\Factory::create();
+
+        // Create callback to execute
+        $app = $this;
+        $callback = function() use ($app, $eventLoop, &$callback) {
+
+            // Get PullConfig
+            $pullConfig = $app->handler->getPullConfig();
+
+            // Pull messages from queue
+            $app['logger'] && $app['logger']->debug("Pulling {$pullConfig['maxMessages']} message(s) from Subscription");
+            $messages = $app['pubsub']->pullMessages(...array_values($pullConfig));
+            $app['logger'] && $app['logger']->debug("Pulled " . sizeof($messages) . " messages");
+
+            // Run handler with proper settings
+            foreach ($messages as $message) {
+
+                $app['logger'] && $app['logger']->debug("Sending message " . $message->id() . " to handler");
+                
+                // Process the message
+                $app->handler
+                    ->with('topicName', $app->topicName)
+                    ->with('subscriptionName', $app->subscriptionName)
+                    ->with('message', $message)
+                    ->run();
+
+                // ACK the message (if not auto-ACK'd)
+                if ($pullConfig['autoAcknowledge'] === false) {
+                    $app['logger'] && $app['logger']->debug("Acknowledging message " . $message->id() . "");
+                    $app['pubsub']->acknowledgeMessage($message);
+                    $app['logger'] && $app['logger']->debug("Acknowledged message " . $message->id() . "");
+                }
+
+            }
+
+            // Re-start, if needed
+            if ($app->handler->shouldLoopAndPull()) {
+                $eventLoop->futureTick($callback);
+            }
+
+        };
+
+        // Schedule the callback
+        $eventLoop->futureTick($callback);
+
+        // Start!
+        $eventLoop->run();
+
+        // @TODO: Catch scenarios where shouldLoopAndPull() is true but the loop has stopped
+
+        $app['logger'] && $app['logger']->debug("Done");
 
     }
 

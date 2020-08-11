@@ -16,5 +16,8 @@
     "bin": [
         "bin/pubsub-pull",
         "bin/pubsub-push"
-    ]
+    ],
+    "require": {
+        "react/event-loop": "^1.1"
+    }
 }
