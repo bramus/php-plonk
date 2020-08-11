@@ -81,27 +81,45 @@ class Application extends \Plonk\Runtime\PubSub\Application {
             $pullConfig = $app->handler->getPullConfig();
 
             // Pull messages from queue
-            $app['logger'] && $app['logger']->debug("Pulling {$pullConfig['maxMessages']} message(s) from Subscription");
+            // $app['logger'] && $app['logger']->debug("Pulling {$pullConfig['maxMessages']} message(s) from Subscription");
             $messages = $app['pubsub']->pullMessages(...array_values($pullConfig));
-            $app['logger'] && $app['logger']->debug("Pulled " . sizeof($messages) . " messages");
+            $app['logger'] && $app['logger']->debug("Pulled " . sizeof($messages) . " messages from Subscription");
 
             // Run handler with proper settings
             foreach ($messages as $message) {
 
-                $app['logger'] && $app['logger']->debug("Sending message " . $message->id() . " to handler");
+                $app['logger'] && $app['logger']->debug("Passing message " . $message->id() . " to handler");
+
+                // @TODO: Convert $message to a \Concis\Provider\GCPCloud\Pubsub\Datatype\PubsubMessage instance
+                // @TODO bis: Adjust Concis class so that it doesn't base64_decode …
+                // $message = $message->toArray();
+                // $message['data'] = \base64_encode($message['data']);
+                // $message = \Concis\Util\ObjectFactory::fromArray(
+                //     $message,
+                //     \Concis\Provider\GCPCloud\Pubsub\Datatype\PubsubMessage::class
+                // );
                 
                 // Process the message
-                $app->handler
-                    ->with('topicName', $app->topicName)
-                    ->with('subscriptionName', $app->subscriptionName)
-                    ->with('message', $message)
-                    ->run();
+                try {
+                    $processed = $app->handler
+                        ->with('topicName', $app->topicName)
+                        ->with('subscriptionName', $app->subscriptionName)
+                        ->with('message', $message)
+                        ->run();
+                } catch (\Exception $e) {
+                    $app['logger'] && $app['logger']->critical($e->getMessage());
+                    $processed = false;
+                }
 
                 // ACK the message (if not auto-ACK'd)
                 if ($pullConfig['autoAcknowledge'] === false) {
-                    $app['logger'] && $app['logger']->debug("Acknowledging message " . $message->id() . "");
-                    $app['pubsub']->acknowledgeMessage($message);
-                    $app['logger'] && $app['logger']->debug("Acknowledged message " . $message->id() . "");
+                    if ($processed) {
+                        // $app['logger'] && $app['logger']->debug("Acknowledging message " . $message->id() . "");
+                        $app['pubsub']->acknowledgeMessage($message);
+                        $app['logger'] && $app['logger']->debug("Acknowledged message " . $message->id() . "");
+                    } else {
+                        $app['logger'] && $app['logger']->warn("Did not acknowledge message " . $message->id() . " because it was not processed.");
+                    }
                 }
 
             }
