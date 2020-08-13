@@ -116,7 +116,7 @@ class Application extends \Plonk\Runtime\PubSub\Application {
                     if ($processed) {
                         // $app['logger'] && $app['logger']->debug("Acknowledging message " . $message->id() . "");
                         $app['pubsub']->acknowledgeMessage($message);
-                        $app['logger'] && $app['logger']->debug("Acknowledged message " . $message->id() . "");
+                        $app['logger'] && $app['logger']->debug("Acknowledged message " . $message->id() . " (ACK ID " . $message->ackId() . ")");
                     } else {
                         $app['logger'] && $app['logger']->warn("Did not acknowledge message " . $message->id() . " because it was not processed.");
                     }
