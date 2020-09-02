@@ -50,6 +50,17 @@ class Application extends \Plonk\Runtime\PubSub\Application {
             return new \Plonk\Service\GCPPubSub($pubsubConfig);
         });
 
+        // PubSub Topics
+        if ($config['conf.pubsub.topics'] ?? null) {
+            foreach ($config['conf.pubsub.topics'] as $identifier => $topic) {
+                $this['pubsub.' . $identifier] = $this->share(function () use ($pubsubConfig, $topic) {
+                    $instance = new \Plonk\Service\GCPPubSub($pubsubConfig);
+                    $instance->setTopic($topic);
+                    return $instance;
+                });
+            }
+        }
+
     }
 
 	/**
