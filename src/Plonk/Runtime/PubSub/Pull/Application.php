@@ -5,6 +5,8 @@ namespace Plonk\Runtime\PubSub\Pull;
 class Application extends \Plonk\Runtime\PubSub\Application {
 
     public $subscriptionName = null;
+    private $eventLoop = null;
+    public $shutdownRequested = false;
 
     /**
      * Log exceptions using logger
@@ -98,6 +100,10 @@ class Application extends \Plonk\Runtime\PubSub\Application {
             $pullConfig = $app->handler->getPullConfig();
             $eventLoop = $app->eventLoop;
 
+            if (!$eventLoop || $app->shutdownRequested) {
+                return;
+            }
+
             // Pull messages from queue
             // $app['logger'] && $app['logger']->debug("Pulling {$pullConfig['maxMessages']} message(s) from Subscription");
             $messages = $app['pubsub']->pullMessages(...array_values($pullConfig));
@@ -143,7 +149,7 @@ class Application extends \Plonk\Runtime\PubSub\Application {
             }
 
             // Re-start, if needed
-            if ($app->handler->shouldLoopAndPull()) {
+            if (!$app->shutdownRequested && $app->handler->shouldLoopAndPull()) {
                 $eventLoop->futureTick($callback);
             }
 
@@ -169,7 +175,12 @@ class Application extends \Plonk\Runtime\PubSub\Application {
                 $this['logger'] && $this['logger']->info("Shutting down due to received SIGINT");
         }
 
-        $this->eventLoop->stop();
+        if ($this->eventLoop) {
+            $this->eventLoop->stop();
+        }
+
+        $this->eventLoop = null;
+        $this->shutdownRequested = true;
     }
 
 }
