@@ -24,6 +24,20 @@ class GCPPubSub {
 		return call_user_func_array([$this->client, $name], $args);
 	}
 
+	public function acknowledgeMessage($message) {
+		return $this
+			->topic($this->getTopic())
+			->subscription($this->getSubscription())
+			->acknowledge($message);
+	}
+
+	public function acknowledgeMessages($messages) {
+		return $this
+			->topic($this->getTopic())
+			->subscription($this->getSubscription())
+			->acknowledgeBatch($messages);
+	}
+
     public function publishMessage($data, array $attributes = []) {
         if (!$this->config['topic'] ?? null) {
             throw new \Exception('No topic is set');
