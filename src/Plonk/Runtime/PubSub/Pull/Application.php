@@ -70,6 +70,12 @@ class Application extends \Plonk\Runtime\PubSub\Application {
 	 */
     public function run() {
 
+        // Graceful Shutdown
+        pcntl_async_signals(true);
+        pcntl_signal(SIGINT, [$this, 'shutdown']);
+        pcntl_signal(SIGTERM, [$this, 'shutdown']);
+        // pcntl_signal(SIGKILL, [$this, 'shutdown']); // “Fatal error: Error installing signal handler for 9”
+
         // Start Server
         $this['logger'] && $this['logger']->debug("Starting with processing of PubSub topic {$this->topicName} using Pull Subscription {$this->subscriptionName}\n");
 
@@ -82,14 +88,15 @@ class Application extends \Plonk\Runtime\PubSub\Application {
         $this->handler = new $this->handlerClassName($this);
 
         // Create Event Loop
-        $eventLoop = \React\EventLoop\Factory::create();
+        $this->eventLoop = \React\EventLoop\Factory::create();
 
         // Create callback to execute
         $app = $this;
-        $callback = function() use ($app, $eventLoop, &$callback) {
+        $callback = function() use ($app, &$callback) {
 
-            // Get PullConfig
+            // Get Required shorthands
             $pullConfig = $app->handler->getPullConfig();
+            $eventLoop = $app->eventLoop;
 
             // Pull messages from queue
             // $app['logger'] && $app['logger']->debug("Pulling {$pullConfig['maxMessages']} message(s) from Subscription");
@@ -143,15 +150,26 @@ class Application extends \Plonk\Runtime\PubSub\Application {
         };
 
         // Schedule the callback
-        $eventLoop->futureTick($callback);
+        $this->eventLoop->futureTick($callback);
 
         // Start!
-        $eventLoop->run();
+        $this->eventLoop->run();
 
         // @TODO: Catch scenarios where shouldLoopAndPull() is true but the loop has stopped
 
-        $app['logger'] && $app['logger']->debug("Done");
+        $app['logger'] && $app['logger']->info("EXITED");
 
+    }
+
+    public function shutdown($signal) {   
+        switch($signal) {
+            case SIGTERM:
+                $this['logger'] && $this['logger']->info("Shutting down due to received SIGTERM");
+            case SIGINT:
+                $this['logger'] && $this['logger']->info("Shutting down due to received SIGINT");
+        }
+
+        $this->eventLoop->stop();
     }
 
 }
