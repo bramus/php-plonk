@@ -87,7 +87,7 @@ class GCPPubSub {
     }
 
 	public function getSubscription() {
-		return $this->config['topic'] ?? null;
+		return $this->config['subscription'] ?? null;
     }
 
 	public function getTopic() {
