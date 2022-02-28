@@ -29,13 +29,17 @@ class Application extends \Plonk\Runtime\PubSub\Application {
             $errorStr .= '” while running pubsub handler "' . get_class($this->handler) . '" on topic "' . $this->handler->getTopicName();
         }
 
-        $this['logger'] && $this['logger']->emergency($errorStr, [
-            // @TODO: Include pubsub message?
-            'message' => $e->getMessage(),
-            'file' => $e->getFile(),
-            'line' => $e->getLine(),
-            'trace' => $stacktrace,
-        ]);
+        if ($this->offsetExists('logger')) {
+            $this['logger']->emergency($errorStr, [
+                // @TODO: Include pubsub message?
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $stacktrace,
+            ]);
+        } else {
+            echo $e->getMessage();
+        }
     }
 
 	/**
