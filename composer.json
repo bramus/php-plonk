@@ -18,6 +18,7 @@
         "bin/pubsub-push"
     ],
     "require": {
-        "react/event-loop": "^1.1"
+        "react/event-loop": "^1.1",
+        "pimple/pimple": "~1.0"
     }
 }
