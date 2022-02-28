@@ -4,8 +4,44 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "f3d8708656e1d4b0e182894708d76918",
+    "content-hash": "45c0d66637796cc669dde5ace7a94e6d",
     "packages": [
+        {
+            "name": "bramus/silex-stub",
+            "version": "1.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/bramus/php-silex-stub.git",
+                "reference": "fe4f4a9af82f97c002244c286f2d2a43c49e4c6d"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/bramus/php-silex-stub/zipball/fe4f4a9af82f97c002244c286f2d2a43c49e4c6d",
+                "reference": "fe4f4a9af82f97c002244c286f2d2a43c49e4c6d",
+                "shasum": ""
+            },
+            "type": "library",
+            "autoload": {
+                "psr-0": {
+                    "Silex": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Bramus",
+                    "email": "bramus@bram.us"
+                }
+            ],
+            "support": {
+                "issues": "https://github.com/bramus/php-silex-stub/issues",
+                "source": "https://github.com/bramus/php-silex-stub/tree/1.0"
+            },
+            "time": "2020-03-10T09:56:19+00:00"
+        },
         {
             "name": "pimple/pimple",
             "version": "v1.1.1",
