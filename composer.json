@@ -22,5 +22,9 @@
         "pimple/pimple": "~1.0",
         "bramus/silex-stub": "^1.0",
         "doctrine/dbal": "~2.5"
+    },
+    "scripts": {
+        "lint": "php-cs-fixer fix --diff --dry-run --ansi",
+        "fix": "php-cs-fixer fix"
     }
 }
