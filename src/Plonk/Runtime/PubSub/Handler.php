@@ -12,17 +12,19 @@ abstract class Handler
 	 * @return void
 	 */
 	public static function loadDependencies($app, $config)
-    {
-        // NOOP
-    }
+	{
+		// NOOP
+	}
 
-	public function with($name, $value) {
+	public function with($name, $value)
+	{
 		if (in_array($name, ['config', 'env'])) {
 			throw new \Exception('You cannot set config or env on an Handler, as they are reserved');
 		}
 		$this->$name = $value;
+
 		return $this;
 	}
 
-    abstract public function run();
+	abstract public function run();
 }

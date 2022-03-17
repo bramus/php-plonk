@@ -4,8 +4,8 @@ namespace Plonk\Provider\Service;
 
 class MailerServiceProvider extends PimpleBasedServiceProvider
 {
-
-	public function registerInPimple(\Pimple $app) {
+	public function registerInPimple(\Pimple $app)
+	{
 		if (!$this->config) {
 			return;
 		}
@@ -13,10 +13,11 @@ class MailerServiceProvider extends PimpleBasedServiceProvider
 		$mailerConfig = $this->config;
 		$app['mailer'] = function() use ($app, $mailerConfig) {
 			$mailer = new \PHPMailer\PHPMailer\PHPMailer(true);
-			
-			switch($mailerConfig['mailer']) {
+
+			switch ($mailerConfig['mailer']) {
 				case 'sendmail':
 					$mailer->isSendmail();
+
 					break;
 				case 'smtp':
 					$mailer->isSMTP();
@@ -28,6 +29,7 @@ class MailerServiceProvider extends PimpleBasedServiceProvider
 					$mailer->SMTPSecure = $mailerConfig['smtp']['secure'];
 					// $mailer->SMTPAutoTLS = false;
 					$mailer->SMTPDebug = $mailerConfig['smtp']['debug'];
+
 					break;
 				default:
 					throw new \Exception('Invalid “mailer” defined in $config["conf.mail"]');
@@ -39,7 +41,8 @@ class MailerServiceProvider extends PimpleBasedServiceProvider
 		};
 	}
 
-	public function bootInPimple(\Pimple $app) {
+	public function bootInPimple(\Pimple $app)
+	{
 		// Nothing!
 	}
 }

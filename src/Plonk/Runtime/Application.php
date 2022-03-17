@@ -5,16 +5,16 @@ namespace Plonk\Runtime;
 /**
  * Base Plonk Application class that accepts a config and an env.
  * Dependencies will be loaded at construction time.
- * 
+ *
  * Usage:
  * $app = new Application();
  * $app->boot();
  * $app->run();
- * 
+ *
  * Override loadDependencies($config, $env) to load extra dependencies
  */
-abstract class Application extends \Pimple {
-
+abstract class Application extends \Pimple
+{
 	protected $env;
 	protected $config;
 
@@ -27,14 +27,16 @@ abstract class Application extends \Pimple {
 	 *
 	 * @return void
 	 */
-	public function __construct($config, $env) {
+	public function __construct($config, $env)
+	{
 		$this->validateEnv($env, $config['conf.environments'] ?? []);
 
 		$this->storeEnv($env);
 		$this->storeConfig($config);
 	}
 
-	protected function validateEnv($env, array $envs = []) {
+	protected function validateEnv($env, array $envs = [])
+	{
 		if (sizeof($envs) && !in_array($env, $envs)) {
 			throw new \Exception('INVALID APP_ENV "' . $env . '"');
 		}
@@ -45,12 +47,13 @@ abstract class Application extends \Pimple {
 	 * @param  [type] $config [description]
 	 * @return [type]         [description]
 	 */
-	protected function storeConfig($config) {
+	protected function storeConfig($config)
+	{
 
 		// Envify Settings
 		if (isset($config['conf.environments']) && sizeof($config['conf.environments'])) {
-            $config = \Plonk\Util\Config::envify($config, $this->env, $config['conf.environments']);
-        }
+			$config = \Plonk\Util\Config::envify($config, $this->env, $config['conf.environments']);
+		}
 
 		// Store it
 		$this->config = $config;
@@ -66,7 +69,8 @@ abstract class Application extends \Pimple {
 	 * @param  [type] $env [description]
 	 * @return [type]      [description]
 	 */
-	protected function storeEnv($env) {
+	protected function storeEnv($env)
+	{
 		$this->env = $env;
 		$this['env'] = $env;
 	}
@@ -76,13 +80,14 @@ abstract class Application extends \Pimple {
 	 * @param  array $config The Configuration Array
 	 * @return void
 	 */
-	protected function loadDependencies($config) {
+	protected function loadDependencies($config)
+	{
 
 		// Store debug flag
 		$this['debug'] = $config['conf.debug'];
 
 		// Monolog
-        // @TODO: loggerIdentifier override
+		// @TODO: loggerIdentifier override
 		// if ($this->loggerIdentifier) {
 		// 	$config['conf.logger']['name'] = $this->loggerIdentifier;
 		// }
@@ -91,13 +96,12 @@ abstract class Application extends \Pimple {
 		// @TODO: Other default dependencies?
 		// - Twig
 		// - …
-		
+
 		// Database Connection(s)
-		$this->register(new \Plonk\Provider\Service\DatabaseServiceProvider($config['conf.dbs'] ?? [ 'default' => ($config['conf.db'] ?? null) ]));
+		$this->register(new \Plonk\Provider\Service\DatabaseServiceProvider($config['conf.dbs'] ?? ['default' => ($config['conf.db'] ?? null)]));
 
 		// Database Repositories
 		$this->register(new \Plonk\Provider\Service\RepositoryServiceProvider($config['conf.repositories'] ?? []));
-
 	}
 
 	/**
@@ -108,7 +112,8 @@ abstract class Application extends \Pimple {
 	 *
 	 * @return Cronjob
 	 */
-	public function register(\Silex\ServiceProviderInterface $provider, array $values = array()) {
+	public function register(\Silex\ServiceProviderInterface $provider, array $values = [])
+	{
 		$this->providers[] = $provider;
 
 		$provider->registerInPimple($this);
@@ -124,7 +129,8 @@ abstract class Application extends \Pimple {
 	 * Boots the service Providers
 	 * @return [type] [description]
 	 */
-	protected function bootProviders() {
+	protected function bootProviders()
+	{
 		if (sizeof($this->providers) > 0) {
 			foreach ($this->providers as $provider) {
 				$provider->bootInPimple($this);
@@ -132,7 +138,8 @@ abstract class Application extends \Pimple {
 		}
 	}
 
-	public function isBooted() {
+	public function isBooted()
+	{
 		return $this->booted;
 	}
 
@@ -140,24 +147,26 @@ abstract class Application extends \Pimple {
 	 * You know boot, right before run …
 	 * @return [type] [description]
 	 */
-	public function boot() {
-        if (!$this->isBooted()) {
-            $this->loadDependencies($this->config, $this->env);
-            $this->bootProviders();
+	public function boot()
+	{
+		if (!$this->isBooted()) {
+			$this->loadDependencies($this->config, $this->env);
+			$this->bootProviders();
 			$this->booted = true;
-        }
+		}
 
 		return $this;
 	}
 
-	public function with($name, $value) {
+	public function with($name, $value)
+	{
 		if (in_array($name, ['config', 'env'])) {
 			throw new \Exception('You cannot set config or env on an Application, as they are reserved');
 		}
 		$this->$name = $value;
+
 		return $this;
 	}
 
 	abstract public function run();
-
 }

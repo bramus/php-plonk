@@ -48,16 +48,17 @@ namespace Plonk\Service;
 
 use Google\Cloud\Firestore\FirestoreClient;
 
-class Firestore {
-
+class Firestore
+{
 	private $db;
 
-	public function __construct($config) {
+	public function __construct($config)
+	{
 		$this->client = new FirestoreClient($config);
 	}
 
-	public function __call($name, $args) {
+	public function __call($name, $args)
+	{
 		return call_user_func_array([$this->client, $name], $args);
 	}
-
 }
