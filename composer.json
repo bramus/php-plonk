@@ -20,6 +20,7 @@
     "require": {
         "react/event-loop": "^1.1",
         "pimple/pimple": "~1.0",
-        "bramus/silex-stub": "^1.0"
+        "bramus/silex-stub": "^1.0",
+        "doctrine/dbal": "~2.5"
     }
 }

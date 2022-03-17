@@ -89,9 +89,45 @@ abstract class Application extends \Pimple {
 		$this->register(new \Plonk\Provider\Service\LoggerServiceProvider($config['conf.logger'] ?? null));
 
 		// @TODO: Other default dependencies?
-		// - Database
 		// - Twig
 		// - …
+
+
+
+        // Database Connection(s)
+        $dbConfig = $config['conf.db'] ?? null;
+        $dbsConfig = $config['conf.dbs'] ?? null;
+        if (!$dbsConfig && $dbConfig) {
+            $dbsConfig = [
+                'default' => $dbConfig,
+            ];
+        }
+
+        if (!$dbsConfig) {
+            $app['dbs.config'] = null;
+            $app['dbs'] = null;
+        } else {
+            $app['dbs.config'] = $dbsConfig;
+            $app['dbs'] = $app->share(function($app) {
+                $dbs = new \Pimple();
+                foreach ($app['dbs.config'] as $name => $dbConfig) {
+                    $dbs[$name] = $app->share(function() use ($dbConfig) {
+                        return \Doctrine\DBAL\DriverManager::getConnection($dbConfig, new \Doctrine\DBAL\Configuration());
+                    });
+                    // $app['db']->connect(); // Test connection upfront, to detect failures on boot …
+                }
+
+                return $dbs;
+            });
+
+            // Add Shortcuts to default DB
+            $app['db'] = $app->share(function() use ($app) {
+                return $app['dbs']['default'];
+            });
+            $app['db.config'] = function() use ($app) {
+                return $app['dbs.config']['default'];
+            };
+        }
 
 		// Database Repositories
 		$this->register(new \Plonk\Provider\Service\RepositoryServiceProvider($config['conf.repositories'] ?? []));
